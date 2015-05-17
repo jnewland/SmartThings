@@ -1,7 +1,7 @@
 # SmartThings
 
-A collection of SmartThings experiments.
+A collection of SmartThings experiments and resources
 
-* https://media.readthedocs.org/pdf/smartthings/latest/smartthings.pdf
+* https://graph.api.smartthings.com/ide/doc/smartApp
 * https://groovyconsole.appspot.com/
 * https://raw.githubusercontent.com/harperreed/SmartThings-webhook/master/webhook.groovy
