@@ -79,9 +79,7 @@ def deviceCommandMap(device, type) {
   device.supportedCommands.collectEntries { command->
       def commandUrl = "https://graph.api.smartthings.com/api/smartapps/installations/${app.id}/${type}/${device.id}/command/${command.name}?access_token=${state.accessToken}"
       [
-        (command.name): [
-            "PUT": commandUrl
-        ]
+        (command.name): commandUrl
       ]
   }
 }
