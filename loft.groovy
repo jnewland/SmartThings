@@ -83,7 +83,8 @@ def eventHandler(evt) {
             }
         }
 
-        if (evt.value == "Early Bird / Night Owl") {
+        // Turn on some lights if one of us is up
+        if (evt.value == "Yawn") {
             lights.each { s ->
                 if (s.displayName == "loft" ||
                     s.displayName == "entry" ||
