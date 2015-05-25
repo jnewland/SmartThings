@@ -85,13 +85,13 @@ def eventHandler(evt) {
 
         // Turn on some lights if one of us is up
         if (evt.value == "Yawn") {
-            lights.each { s ->
-                if (s.displayName == "loft" ||
+            lights.findAll { s ->
+                s.displayName == "loft" ||
                     s.displayName == "entry" ||
-                    s.displayName == "chandelier") {
-                    log.info("One of you is up, turning on ${s.displayName}")
-                    s.on()
-                }
+                    s.displayName == "chandelier"
+            }.each { s ->
+                log.info("One of you is up, turning on ${s.displayName}")
+                s.on()
             }
         }
 
@@ -100,15 +100,24 @@ def eventHandler(evt) {
             lights.each { s ->
                 log.info("Day mode enabled, turning on ${s.displayName}")
                 s.on()
+                if ("setLevel" in s.supportedCommands.collect { it.name }) {
+                    s.setLevel(100)
+                }
             }
+        }
+
+        // turn on night mode at sunset
+        if (evt.displayName == "sunset" && current_count > 0 && location.mode == "Home / Day") {
+            changeMode("Home / Night")
         }
 
         // dim lights at night
         if (evt.value == "Home / Night") {
-            lights.each { s ->
+            lights.findAll { s ->
+                "setLevel" in s.supportedCommands.collect { it.name }
+            }.each { s ->
                 log.info("Night mode enabled, dimming ${s.displayName}")
-                // TODO
-                // s.on()
+                s.setLevel(75)
             }
         }
 
