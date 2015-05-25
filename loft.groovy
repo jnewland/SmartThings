@@ -73,11 +73,21 @@ def eventHandler(evt) {
         def lights = [switches, hues].flatten()
         // turn on lights near stairs when motion is detected
         if (evt.displayName == "stairs" && evt.value == "active") {
-            lights.each { s ->
-                if (s.displayName == "stairs" ||
+            lights.findAll { s ->
+                s.displayName == "stairs" ||
                     s.displayName == "loft" ||
-                    s.displayName == "entry") {
-                    log.info("Motion detected near the stairs, turning on ${s.displayName}")
+                    s.displayName == "entry"
+            }.each { s ->
+                log.info("Motion detected near the stairs, turning on ${s.displayName}")
+                if ("setLevel" in s.supportedCommands.collect { it.name }) {
+                    if (location.mode == "Sleep") {
+                        s.setLevel(50)
+                    } else if (location.mode == "Home / Night") {
+                        s.setLevel(75)
+                    } else {
+                        s.setLevel(100)
+                    }
+                } else {
                     s.on()
                 }
             }
@@ -91,7 +101,11 @@ def eventHandler(evt) {
                     s.displayName == "chandelier"
             }.each { s ->
                 log.info("One of you is up, turning on ${s.displayName}")
-                s.on()
+                if ("setLevel" in s.supportedCommands.collect { it.name }) {
+                    s.setLevel(75)
+                } else {
+                    s.on()
+                }
             }
         }
 
@@ -99,9 +113,10 @@ def eventHandler(evt) {
         if (evt.value == "Home / Day") {
             lights.each { s ->
                 log.info("Day mode enabled, turning on ${s.displayName}")
-                s.on()
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     s.setLevel(100)
+                } else {
+                    s.on()
                 }
             }
         }
@@ -118,6 +133,14 @@ def eventHandler(evt) {
             }.each { s ->
                 log.info("Night mode enabled, dimming ${s.displayName}")
                 s.setLevel(75)
+            }
+
+            // turn off that light by the door downstairs entirely
+            lights.findAll { s ->
+                s.displayName == "downstairs door"
+            }.each { s ->
+                log.info("Night mode enabled, turning off ${s.displayName}")
+                s.off()
             }
         }
 
