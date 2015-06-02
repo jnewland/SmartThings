@@ -27,6 +27,9 @@ preferences {
 
 def selectThings() {
     dynamicPage(name: "selectThings", title: "Select Things", install: true) {
+        section("Webhook URL"){
+            input "url", "text", title: "Webhook URL", description: "Your webhook URL", required: true
+        }
         section("Things to monitor for events") {
             input "monitor_switches", "capability.switch", title: "Switches", multiple: true, required: false
             input "monitor_motion", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false
@@ -65,20 +68,29 @@ def eventHandler(evt) {
     def everyone_here = presense_is_after(monitor_presence, "present", 10)
     def everyone_gone = presense_is_after(monitor_presence, "not present", 10)
     def current_count = monitor_presence.findAll { it.currentPresence == "present" }.size()
-    log.debug("evt.displayName=${evt.displayName} evt.value=${evt.value} daytime=${is_daytime()} mode=${location.mode} current_count=${current_count} everyone_here=${everyone_here} everyone_gone=${everyone_gone}")
+    webhook([
+      displayName:   evt.displayName,
+      value:         evt.value,
+      daytime:       is_daytime(),
+      mode:          location.mode,
+      current_count: current_count,
+      everyone_here: everyone_here,
+      everyone_gone: everyone_gone
+    ])
 
     if (mode == "Pause") {
+        webhook([ at: 'paused' ])
         log.info("No actions taken in Pause mode")
     } else {
         def lights = [switches, hues].flatten()
         // turn on lights near stairs when motion is detected
         if (evt.displayName == "stairs" && evt.value == "active") {
+            webhook([ at: 'stair_motion_lights' ])
             lights.findAll { s ->
                 s.displayName == "stairs" ||
                     s.displayName == "loft" ||
                     s.displayName == "entry"
             }.each { s ->
-                log.info("Motion detected near the stairs, turning on ${s.displayName}")
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     if (location.mode == "Sleep") {
                         s.setLevel(50)
@@ -95,12 +107,12 @@ def eventHandler(evt) {
 
         // Turn on some lights if one of us is up
         if (evt.value == "Yawn") {
+            webhook([ at: 'yawn' ])
             lights.findAll { s ->
                 s.displayName == "loft" ||
                     s.displayName == "entry" ||
                     s.displayName == "chandelier"
             }.each { s ->
-                log.info("One of you is up, turning on ${s.displayName}")
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     s.setLevel(75)
                 } else {
@@ -111,8 +123,8 @@ def eventHandler(evt) {
 
         // turn on all lights when entering day mode
         if (evt.value == "Home / Day") {
+            webhook([ at: 'home_day' ])
             lights.each { s ->
-                log.info("Day mode enabled, turning on ${s.displayName}")
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     s.setLevel(100)
                 } else {
@@ -123,11 +135,13 @@ def eventHandler(evt) {
 
         // turn on night mode at sunset
         if (evt.displayName == "sunset" && current_count > 0 && location.mode == "Home / Day") {
+            webhook([ at: 'sunset' ])
             changeMode("Home / Night")
         }
 
         // dim lights at night
         if (evt.value == "Home / Night") {
+            webhook([ at: 'home_night' ])
             lights.findAll { s ->
                 "setLevel" in s.supportedCommands.collect { it.name }
             }.each { s ->
@@ -146,6 +160,7 @@ def eventHandler(evt) {
 
         // turn off all lights when entering sleep mode
         if (evt.value == "Sleep") {
+            webhook([ at: 'sleep' ])
             lights.each { s ->
                 log.info("Sleep mode enabled, turning off ${s.displayName}")
                 s.off()
@@ -154,6 +169,7 @@ def eventHandler(evt) {
 
         // turn off all lights when everyone goes away
         if (everyone_gone && mode != "Away") {
+            webhook([ at: 'away' ])
             changeMode("Away")
             lights.each { s ->
                 log.info("Sleep mode enabled, turning off ${s.displayName}")
@@ -163,11 +179,13 @@ def eventHandler(evt) {
 
         // turn on all lights when everyone returns
         if (current_count > 0 && location.mode == "Away") {
+            webhook([ at: 'home' ])
             changeMode("Home")
         }
 
         // Make home mode specific based on day / night
         if (evt.value == "Home") {
+            webhook([ at: 'home_day_night' ])
             if (is_daytime()) {
                 changeMode("Home / Day")
             } else {
@@ -178,6 +196,7 @@ def eventHandler(evt) {
         if (canSchedule()) {
             runIn(61, tick)
         } else {
+            webhook([ can_schedule: 'false' ])
             log.error("can_schedule=false")
         }
     }
@@ -197,6 +216,20 @@ def tick() {
       value: "tock"
     ])
 }
+
+def webhook(map) {
+    def successClosure = { response ->
+      log.debug "Request was successful, $response"
+    }
+
+    def json_params = [
+        uri: settings.url,
+        success: successClosure,
+        body: map
+    ]
+    httpPostJson(json_params)
+}
+
 
 private is_daytime() {
     def data = getWeatherFeature("astronomy")
