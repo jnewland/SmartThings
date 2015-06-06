@@ -40,6 +40,9 @@ def selectThings() {
             input "switches", "capability.switch", title: "Switches", multiple: true, required: false
             input "dimmers", "capability.switchLevel", title: "Dimmers", multiple: true, required: false
         }
+        section("Voice") {
+            input "voice", "capability.speechSynthesis", title: "Voice", required: false
+        }
     }
 }
 
@@ -203,6 +206,7 @@ def eventHandler(evt) {
 }
 
 def changeMode(mode) {
+    voice?.speak("changing mode to ${mode}")
     setLocationMode(mode)
     eventHandler([
         displayName: "changeMode",
