@@ -50,8 +50,8 @@ def copyConfig() {
     }
     dynamicPage(name: "copyConfig", title: "Config", install:true) {
         section("Select devices to include in the /devices API call") {
-            input "switches", "capability.switch", title: "Switches", multiple: true
-            input "hues", "capability.colorControl", title: "Hues", multiple: true
+            input "switches", "capability.switch", title: "Switches", multiple: true, required: false
+            input "hues", "capability.colorControl", title: "Hues", multiple: true, required: false
         }
 
         section() {
@@ -67,8 +67,15 @@ def copyConfig() {
 
 def renderConfig() {
     def configJson = new groovy.json.JsonOutput().toJson([
-      appId:        app.id,
-      accessToken:  state.accessToken
+        description: "JSON API",
+        platforms: [
+            [
+                platform: "SmartThings",
+                name: "SmartThings",
+                app_id:        app.id,
+                access_token:  state.accessToken
+            ]
+        ],
     ])
 
     def configString = new groovy.json.JsonOutput().prettyPrint(configJson)
