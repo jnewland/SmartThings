@@ -87,7 +87,7 @@ def eventHandler(evt) {
     } else {
         def lights = [switches, hues].flatten()
         // turn on lights near stairs when motion is detected
-        if (evt.displayName == "stairs" && evt.value == "active") {
+        if (evt.displayName == "motion@stairs" && evt.value == "active") {
             webhook([ at: 'stair_motion_lights' ])
             lights.findAll { s ->
                 s.displayName == "stairs" ||
