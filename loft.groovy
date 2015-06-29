@@ -171,7 +171,7 @@ def eventHandler(evt) {
         }
 
         // turn off all lights when everyone goes away
-        if (everyone_gone && mode != "Away") {
+        if (everyone_gone && location.mode != "Away") {
             webhook([ at: 'away' ])
             changeMode("Away")
             lights.each { s ->
