@@ -206,7 +206,7 @@ def eventHandler(evt) {
 }
 
 def changeMode(mode) {
-    voice?.speak("changing mode to ${mode}")
+    //voice?.speak("changing mode to ${mode}")
     setLocationMode(mode)
     eventHandler([
         displayName: "changeMode",
