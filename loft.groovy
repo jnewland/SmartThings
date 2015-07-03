@@ -94,17 +94,18 @@ def eventHandler(evt) {
                     s.displayName == "loft" ||
                     s.displayName == "entry"
             }.each { s ->
-                if ("setLevel" in s.supportedCommands.collect { it.name }) {
-                    if (location.mode == "Sleep") {
-                        s.setLevel(50)
-                    } else if (location.mode == "Home / Night") {
-                        s.setLevel(75)
-                    } else {
-                        s.setLevel(100)
-                    }
-                } else {
-                    s.on()
-                }
+                if (s.currentSwitch == "off") {
+                  s.on()
+                  if ("setLevel" in s.supportedCommands.collect { it.name }) {
+                      if (location.mode == "Sleep") {
+                          s.setLevel(50)
+                      } else if (location.mode == "Home / Night") {
+                          s.setLevel(75)
+                      } else {
+                          s.setLevel(100)
+                      }
+                  }
+              }
             }
         }
 
