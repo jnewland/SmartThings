@@ -187,7 +187,7 @@ def eventHandler(evt) {
             }
         }
 
-        // turn on all lights when everyone returns
+        // switch mode to Home when we return
         if (current_count > 0 && location.mode == "Away") {
             webhook([ at: 'home' ])
             changeMode("Home")
