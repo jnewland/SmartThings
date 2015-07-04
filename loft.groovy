@@ -167,7 +167,9 @@ def eventHandler(evt) {
         // turn off all lights when entering sleep mode
         if (evt.value == "Sleep") {
             webhook([ at: 'sleep' ])
-            lights.each { s ->
+            lights.findAll { s ->
+                s.currentSwitch == "on"
+            }.each { s ->
                 log.info("Sleep mode enabled, turning off ${s.displayName}")
                 s.off()
             }
@@ -177,8 +179,10 @@ def eventHandler(evt) {
         if (everyone_gone && location.mode != "Away") {
             webhook([ at: 'away' ])
             changeMode("Away")
-            lights.each { s ->
-                log.info("Sleep mode enabled, turning off ${s.displayName}")
+            lights.findAll { s ->
+                s.currentSwitch == "on"
+            }.each { s ->
+                log.info("Away mode enabled, turning off ${s.displayName}")
                 s.off()
             }
         }
