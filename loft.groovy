@@ -116,12 +116,13 @@ def eventHandler(evt) {
                 s.displayName == "loft" ||
                     s.displayName == "entry" ||
                     s.displayName == "chandelier"
+            }.findAll { s ->
+                s.currentSwitch == "off"
             }.each { s ->
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     s.setLevel(75)
-                } else {
-                    s.on()
                 }
+                s.on()
             }
         }
 
@@ -129,10 +130,11 @@ def eventHandler(evt) {
         if (evt.value == "Home / Day") {
             webhook([ at: 'home_day' ])
             lights.each { s ->
-                if ("setLevel" in s.supportedCommands.collect { it.name }) {
-                    s.setLevel(100)
-                } else {
+                if (s.currentSwitch == "off") {
                     s.on()
+                }
+                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
+                    s.setLevel(100)
                 }
             }
         }
