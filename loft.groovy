@@ -91,15 +91,15 @@ def eventHandler(evt) {
         def lights = [switches, hues].flatten()
         // turn on lights near stairs when motion is detected
         if (evt.displayName == "motion@stairs" && evt.value == "active") {
-            notify("motion@stairs")
             webhook([ at: 'stair_motion_lights' ])
+            def message = false
             lights.findAll { s ->
                 s.displayName == "stairs" ||
                     s.displayName == "loft" ||
                     s.displayName == "entry"
             }.findAll { s ->
                 s.currentSwitch == "off"
-            }.each { s ->
+            }.collect { s ->
                 if ("setLevel" in s.supportedCommands.collect { it.name }) {
                     if (location.mode == "Sleep") {
                         s.setLevel(50)
@@ -110,6 +110,14 @@ def eventHandler(evt) {
                     }
                 }
                 s.on()
+            }.find {
+              message = "I noticed motion near the stairs and turned on a few lights so you wouldn't stub your toe. <3"
+              true
+            }
+            if (message == false) {
+                log.info("Motion detected but all lights were on")
+            } else {
+                notify(message)
             }
         }
 
@@ -189,12 +197,14 @@ def eventHandler(evt) {
                 log.info("Away mode enabled, turning off ${s.displayName}")
                 s.off()
             }
+            notify("Bye. I turned off all the lights for ya.")
         }
 
         // switch mode to Home when we return
         if (current_count > 0 && location.mode == "Away") {
             webhook([ at: 'home' ])
             changeMode("Home")
+            notify("Welcome home!")
         }
 
         // Make home mode specific based on day / night
