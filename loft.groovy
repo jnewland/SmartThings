@@ -30,6 +30,9 @@ def selectThings() {
         section("Webhook URL"){
             input "url", "text", title: "Webhook URL", description: "Your webhook URL", required: true
         }
+        section("IFTTT URL"){
+            input "ifttt_url", "text", title: "URL", description: "Your IFTTT Maker Channel URL", required: true
+        }
         section("Things to monitor for events") {
             input "monitor_switches", "capability.switch", title: "Switches", multiple: true, required: false
             input "monitor_motion", "capability.motionSensor", title: "Motion Sensors", multiple: true, required: false
@@ -88,6 +91,7 @@ def eventHandler(evt) {
         def lights = [switches, hues].flatten()
         // turn on lights near stairs when motion is detected
         if (evt.displayName == "motion@stairs" && evt.value == "active") {
+            notify("motion@stairs")
             webhook([ at: 'stair_motion_lights' ])
             lights.findAll { s ->
                 s.displayName == "stairs" ||
@@ -213,7 +217,6 @@ def eventHandler(evt) {
 }
 
 def changeMode(mode) {
-    //voice?.speak("changing mode to ${mode}")
     setLocationMode(mode)
     eventHandler([
         displayName: "changeMode",
@@ -241,6 +244,24 @@ def webhook(map) {
     httpPostJson(json_params)
 }
 
+def notify(message) {
+    //voice?.speak("${notify}")
+
+    def successClosure = { response ->
+      log.debug "Request was successful, $response"
+    }
+
+    def map = [
+      value1: message
+    ]
+
+    def json_params = [
+        uri: settings.ifttt_url,
+        success: successClosure,
+        body: map
+    ]
+    httpPostJson(json_params)
+}
 
 private is_daytime() {
     def data = getWeatherFeature("astronomy")
